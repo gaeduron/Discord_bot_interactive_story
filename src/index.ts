@@ -1,5 +1,7 @@
 // Require the necessary discord.js classes
-const { Client, Events, IntentsBitField, MessageReaction, Partials } = require('discord.js');
+const {Client, Events, IntentsBitField, Partials } = require('discord.js');
+// import {Client, Events, IntentsBitField, Partials } from 'discord.js';
+import { getMemberFromUser, getMemberRoles } from "./user";
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -34,7 +36,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	if (reaction.partial) {
 		// If the message this reaction belongs to was removed, the fetching might result in an API error which should be handled
 		try {
-			await reaction.fetch();
+			reaction = await reaction.fetch();
 		} catch (error) {
 			console.error('Something went wrong when fetching the message:', error);
 			return;
@@ -42,7 +44,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	}
 	if (user.partial) {
 		try {
-			await user.fetch();
+			user = await user.fetch();
 		} catch (error) {
 			console.error('Something went wrong when fetching the message:', error);
 			return;
@@ -52,11 +54,14 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	// Now the message has been cached and is fully available
 	console.log(`${reaction.message.author}'s message "${reaction.message.content}" gained a reaction!`);
 	console.log(`user: ${user}`);
-	member = reaction.message.guild.members.fetch(user)
-	console.log(member)
-	console.log(member._roles)
-	if (reaction.message.content.includes("Rejoins Archie dans son enquête en cliquant sur l'emoji 🔍 en dessous.")) {
-		user.send(`Bienvenu dans mon agence ${user.username} !\n Je vois que tu es ${member.roles ? member.roles : "une nouvelle recrue"}, ta mission sera...`)
+	const guild = reaction.message.guild;
+	const member = await getMemberFromUser(user, guild);
+	const memberRoles = getMemberRoles(member);
+	console.log(memberRoles)
+
+	const currentMessageContent = reaction.message.content;
+	if (currentMessageContent && currentMessageContent.includes("Rejoins Archie dans son enquête en cliquant sur l'emoji 🔍 en dessous.")) {
+		user.send(`Bienvenu dans mon agence ${user.username} !\n Je vois que tu es ${memberRoles.length > 0 ? memberRoles : "une nouvelle recrue"}, ta mission sera...`)
 	}
 });
 
@@ -64,7 +69,6 @@ client.on("messageCreate", (message) => {
 	if (message.author.bot) {
 		return;
 	}
-	// message.react(":__:");
 	if (message.content.includes("Archie") || message.content.includes("archie") || message.content.includes("archi") || message.content.includes("Leguillon") || message.content.includes("leguillon")) {
 		if (Math.round(Math.random())) {
 			message.react('1090643485855596565')
