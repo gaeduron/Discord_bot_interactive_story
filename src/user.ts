@@ -15,3 +15,9 @@ export const getMemberRoles = (member: GuildMember | null): string[] => {
   const roles = member.roles.cache.map(role => role.name)
   return roles;
 }
+
+export const getMemberCurrentQuest = (member: GuildMember | null): string | null => {
+  if (!member) { return null; }
+  const roles = getMemberRoles(member);
+  
+}
