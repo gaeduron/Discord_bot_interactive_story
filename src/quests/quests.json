@@ -1,6 +1,7 @@
-{
-  "quests": {
-    "001_Détective en herbe I": [
+[
+  {
+    "name": "Détective en herbe I",
+    "scenario": [
       {
         "messageBoxContent": "Tu as une idée de où se trouve la boulangerie? ",
         "character": "Archie",
@@ -30,8 +31,11 @@
         "characterEmotion": "Happy",
         "expectedResponses": null
       }
-    ],
-    "002_Détective en herbe II": [
+    ]
+  },
+  {
+    "name": "Détective en herbe II",
+    "scenario": [
       {
         "messageBoxContent": "Bonjour monsieur Fourapin, soyez rassurer nous allons retrouver vos ingrédient manquant le plus vite possible.\n Pouvez vous nous lister les ingrédients manquant ?",
         "character": "Archie",
@@ -67,6 +71,6 @@
         "characterEmotion": "Content",
         "expectedResponses": null
       }
-    ] 
+    ]
   }
-}
+]
