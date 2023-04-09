@@ -10,8 +10,8 @@
       },
       {
         "messageBoxContent": "Trouvez sur la carte le nom de la rue de la boulangerie et donnez la à Archie il saura vous y guider",
-        "imageFile": "Enigme_1_boulangerie_carte.png",
-        "character": "Narrator",
+        "imageFile": "quest_001_carte.png",
+        "character": "Détective club",
         "characterEmotion": null,
         "expectedResponses": ["5 rue du beurre", "rue du beurre", "rue beurre"],
         "errorResponse": {
@@ -51,12 +51,12 @@
       {
         "messageBoxContent": "Regarder dans la reserve quel sont les ingrédient manquants pour la commande du boulanger: example 'pistache carrote sel' ",
         "imageFile": "Enigme_1_boulangerie_reserve_and_ingredient_list.png",
-        "character": "Narrator",
+        "character": "Détective club",
         "characterEmotion": null,
         "expectedResponses": ["vanille chocolat", "chocolat vanille", "chocolat et vanille", "vanille et chocolat", "chocolat, vanille", "vanille, chocolat", "de la vanille et du chocolat", "du chocolat et de la vanille"],
         "errorResponse": {
           "messageBoxContent": "Ce n'est pas les bon ingrédients, veuillez réessayer",
-          "character": "Narrator",
+          "character": "Détective club",
           "characterEmotion": null
         },
         "hintResponse": {
