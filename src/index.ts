@@ -1,7 +1,8 @@
 // Require the necessary discord.js classes
 const {Client, Events, IntentsBitField, Partials } = require('discord.js');
 // import {Client, Events, IntentsBitField, Partials } from 'discord.js';
-import { getMemberFromUser, getMemberRoles } from "./user";
+import { getMemberFromUser, getMemberCurrentQuest } from "./user";
+import { startQuest } from "./quests/quest";
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -52,17 +53,17 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	}
 
 	// Now the message has been cached and is fully available
-	console.log(`${reaction.message.author}'s message "${reaction.message.content}" gained a reaction!`);
-	console.log(`user: ${user}`);
 	const guild = reaction.message.guild;
 	const member = await getMemberFromUser(user, guild);
-	const memberRoles = getMemberRoles(member);
-	console.log(memberRoles)
+	const memberCurrentQuest = getMemberCurrentQuest(member);
 
 	const currentMessageContent = reaction.message.content;
 	if (currentMessageContent && currentMessageContent.includes("Rejoins Archie dans son enquête en cliquant sur l'emoji 🔍 en dessous.")) {
-		user.send(`Bienvenu dans mon agence ${user.username} !\n Je vois que tu es ${memberRoles.length > 0 ? memberRoles : "une nouvelle recrue"}, ta mission sera...`)
+		user.send(`Bienvenu dans mon agence ${user.username} !\nTa mission actuelle est: **${memberCurrentQuest.name}**`)
 	}
+
+	// start quest
+	await startQuest(member, memberCurrentQuest);
 });
 
 client.on("messageCreate", (message) => {
@@ -76,10 +77,6 @@ client.on("messageCreate", (message) => {
 			message.reply("Service des huissiers d'état j'écoute.")
 		}
 		// console.log(message.guild.emojis.cache)
-	}
-
-	if (message.content.includes("Postuler en stage dans l'équipe d'Archie")) {
-		message.author.send("Bienvenu dans mon agence jeune recrue !")
 	}
 })
 
