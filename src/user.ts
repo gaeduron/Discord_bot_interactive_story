@@ -1,4 +1,4 @@
-import { Guild, GuildMember, User } from "discord.js";
+import { Colors, Guild, GuildMember, User } from "discord.js";
 import quests from "./quests/quests.json";
 import { Quest } from "./quests/types/quest";
 
@@ -17,7 +17,7 @@ export const getMemberRoles = (member: GuildMember | null): string[] => {
   return roles;
 }
 
-export const getMemberCurrentQuest = (member: GuildMember): Quest => {
+export const getMemberCurrentQuest = async (member: GuildMember): Promise<Quest> => {
   const roles = getMemberRoles(member);
   const gameQuests = quests as Quest[];
   const accessibleQuests: Quest[] = [];
@@ -32,5 +32,18 @@ export const getMemberCurrentQuest = (member: GuildMember): Quest => {
       mostAdvancedQuest = quest
     }
   })
+
+  if (gameQuests[0] === mostAdvancedQuest) {
+    // create role in guild if inexistant
+    let guildRole = member.guild.roles.cache.find(role => role.name == mostAdvancedQuest.name)
+    if (!guildRole) {
+      await member.guild.roles.create({
+        name: mostAdvancedQuest.name,
+      })
+      guildRole = member.guild.roles.cache.find(role => role.name == mostAdvancedQuest.name)
+    }
+
+    member.roles.add(guildRole);
+  }
   return mostAdvancedQuest;
 }

@@ -2,7 +2,7 @@
 const {Client, Events, IntentsBitField, Partials } = require('discord.js');
 // import {Client, Events, IntentsBitField, Partials } from 'discord.js';
 import { getMemberFromUser, getMemberCurrentQuest } from "./user";
-import { startQuest } from "./quests/quest";
+import { questResponse, startQuest } from "./quests/quest";
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -14,6 +14,7 @@ const client = new Client({
 		IntentsBitField.Flags.Guilds,
 		IntentsBitField.Flags.GuildMembers,
 		IntentsBitField.Flags.GuildMessages,
+		IntentsBitField.Flags.DirectMessages,
 		IntentsBitField.Flags.MessageContent,
 		IntentsBitField.Flags.GuildMessageReactions,
 	],
@@ -55,7 +56,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	// Now the message has been cached and is fully available
 	const guild = reaction.message.guild;
 	const member = await getMemberFromUser(user, guild);
-	const memberCurrentQuest = getMemberCurrentQuest(member);
+	const memberCurrentQuest = await getMemberCurrentQuest(member);
 
 	const currentMessageContent = reaction.message.content;
 	if (currentMessageContent && currentMessageContent.includes("Rejoins Archie dans son enquête en cliquant sur l'emoji 🔍 en dessous.")) {
@@ -66,17 +67,27 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	await startQuest(member, memberCurrentQuest);
 });
 
-client.on("messageCreate", (message) => {
+client.on("messageCreate", async (message) => {
 	if (message.author.bot) {
 		return;
 	}
-	if (message.content.includes("Archie") || message.content.includes("archie") || message.content.includes("archi") || message.content.includes("Leguillon") || message.content.includes("leguillon")) {
-		if (Math.round(Math.random())) {
-			message.react('1090643485855596565')
-		} else {
-			message.reply("Service des huissiers d'état j'écoute.")
+
+	// Direct messages
+	if(!message.guild) {
+		const guild = await client.guilds.fetch(process.env.SUPERNOVA_GUILD);
+		await questResponse(message, guild)
+	}
+	
+	// Guild messages
+	if (message.guild) {
+		if (message.content.includes("Archie") || message.content.includes("archie") || message.content.includes("archi") || message.content.includes("Leguillon") || message.content.includes("leguillon")) {
+			if (Math.round(Math.random())) {
+				message.react('1090643485855596565')
+			} else {
+				message.reply("Service des huissiers d'état j'écoute.")
+			}
+			// console.log(message.guild.emojis.cache)
 		}
-		// console.log(message.guild.emojis.cache)
 	}
 })
 
