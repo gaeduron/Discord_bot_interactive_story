@@ -24,7 +24,7 @@ const displayScenarioMessage = async (member: GuildMember, scenarioMessage: Scen
   if ("imageFile" in scenarioMessage && scenarioMessage.imageFile) {
     await member.send({files: [`./src/images/${scenarioMessage.imageFile}`]});
   }
-  await sleep((scenarioMessage.messageBoxContent.length / 50) * 1000)
+  await sleep((scenarioMessage.messageBoxContent.length / 20) * 1000)
   return null
 }
 
