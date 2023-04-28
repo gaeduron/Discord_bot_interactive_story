@@ -13,7 +13,7 @@
         "imageFile": "quest_001_carte.png",
         "character": "Détective club",
         "characterEmotion": null,
-        "expectedResponses": ["5 rue du beurre", "rue du beurre", "rue beurre"],
+        "expectedResponses": ["5 rue du beurre", "rue du beurre", "rue beurre", "beurre"],
         "errorResponse": {
           "messageBoxContent": "Il ne me semble pas que ce soit cette rue",
           "character": "Archie",
