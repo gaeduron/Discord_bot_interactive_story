@@ -53,7 +53,7 @@ describe("Quest module", () => {
         messageBoxContent: "",
         expectedResponses: null
       }
-      expect(getCharacterImagePath(message)).toBe(`src/images/Archie_Thinking.png`);
+      expect(getCharacterImagePath(message)).toBe(`${process.cwd()}/src/images/Archie_Thinking.png`);
     })
 
     it("Should get the image path with the default emotion if no emotion matches", () => {
@@ -63,7 +63,7 @@ describe("Quest module", () => {
         messageBoxContent: "",
         expectedResponses: null
       }
-      expect(getCharacterImagePath(message)).toBe(`src/images/Archie_default.png`);
+      expect(getCharacterImagePath(message)).toBe(`${process.cwd()}/src/images/Archie_default.png`);
     })
 
     it("Should return an empty string if no charater image matches", () => {
@@ -93,9 +93,9 @@ describe("Quest module", () => {
 
       expect(returned).toBe(null);
       expect(member.send).toBeCalledTimes(3)
-      expect(member.send).toHaveBeenCalledWith({files: ["src/images/Archie_Default.png"]})
+      expect(member.send).toHaveBeenCalledWith({files: [`${process.cwd()}/src/images/Archie_Default.png`]})
       expect(member.send).toHaveBeenCalledWith("hello")
-      expect(member.send).toHaveBeenLastCalledWith({files: ["src/images/closing_message_box.png"]})
+      expect(member.send).toHaveBeenLastCalledWith({files: [`${process.cwd()}/src/images/closing_message_box.png`]})
     })
 
     it("Should send a message with the text content only", async () => {
@@ -146,10 +146,10 @@ describe("Quest module", () => {
 
       await displayScenarioMessage(member, message);
       expect(member.send).toBeCalledTimes(4)
-      expect(member.send).toHaveBeenCalledWith({files: ["src/images/Archie_Default.png"]})
+      expect(member.send).toHaveBeenCalledWith({files: [`${process.cwd()}/src/images/Archie_Default.png`]})
       expect(member.send).toHaveBeenCalledWith("hello")
-      expect(member.send).toHaveBeenCalledWith({files: ["src/images/closing_message_box.png"]})
-      expect(member.send).toHaveBeenLastCalledWith({files: [`src/images/${message.imageFile}`]})
+      expect(member.send).toHaveBeenCalledWith({files: [`${process.cwd()}/src/images/closing_message_box.png`]})
+      expect(member.send).toHaveBeenLastCalledWith({files: [`${process.cwd()}/src/images/${message.imageFile}`]})
     })
 
     it("Should send an image if one is given even without character image", async () => {
@@ -168,7 +168,7 @@ describe("Quest module", () => {
       expect(member.send).toBeCalledTimes(3)
       expect(member.send).toHaveBeenCalledWith(`**${message.character}** happy:`)
       expect(member.send).toHaveBeenCalledWith("hello")
-      expect(member.send).toHaveBeenLastCalledWith({files: [`src/images/${message.imageFile}`]})
+      expect(member.send).toHaveBeenLastCalledWith({files: [`${process.cwd()}/src/images/${message.imageFile}`]})
     })
 
     it("Should send an image if one is given even without character image or emotion", async () => {
@@ -187,7 +187,7 @@ describe("Quest module", () => {
       expect(member.send).toBeCalledTimes(3)
       expect(member.send).toHaveBeenCalledWith(`**${message.character}** :`)
       expect(member.send).toHaveBeenCalledWith("hello")
-      expect(member.send).toHaveBeenLastCalledWith({files: [`src/images/${message.imageFile}`]})
+      expect(member.send).toHaveBeenLastCalledWith({files: [`${process.cwd()}/src/images/${message.imageFile}`]})
     })
   })
 

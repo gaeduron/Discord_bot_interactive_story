@@ -6,8 +6,8 @@ import { existsSync } from "fs";
 import { getMemberCurrentQuest, getMemberFromUser } from "../user";
 
 export const getCharacterImagePath = (scenarioMessage: ScenarioMessage|ScenarioSubMessage): string => {
-  const imagePath =  `src/images/${scenarioMessage.character}_${scenarioMessage.characterEmotion}.png`;
-  const defaultImagePath =  `src/images/${scenarioMessage.character}_default.png`;
+  const imagePath = `${process.cwd()}/src/images/${scenarioMessage.character}_${scenarioMessage.characterEmotion}.png`;
+  const defaultImagePath = `${process.cwd()}/src/images/${scenarioMessage.character}_default.png`;
   if (existsSync(imagePath)) {
     return imagePath;
   } else if (existsSync(defaultImagePath)) {
@@ -22,14 +22,14 @@ export const displayScenarioMessage = async (member: GuildMember, scenarioMessag
   if (characterImage != "") {
     await member.send({files: [characterImage]});
     await member.send(scenarioMessage.messageBoxContent);
-    await member.send({files: ["src/images/closing_message_box.png"]});
+    await member.send({files: [`${process.cwd()}/src/images/closing_message_box.png`]});
   } else {
     await member.send(`**${scenarioMessage.character}** ${(scenarioMessage.characterEmotion || "").toLowerCase()}:`);
     await member.send(scenarioMessage.messageBoxContent);
   }
 
   if ("imageFile" in scenarioMessage && scenarioMessage.imageFile) {
-    await member.send({files: [`src/images/${scenarioMessage.imageFile}`]});
+    await member.send({files: [`${process.cwd()}/src/images/${scenarioMessage.imageFile}`]});
   }
   await sleep((scenarioMessage.messageBoxContent.length / 20) * 1000)
   return null
