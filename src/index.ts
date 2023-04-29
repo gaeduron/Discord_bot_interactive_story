@@ -2,7 +2,7 @@
 const {Client, Events, IntentsBitField, Partials } = require('discord.js');
 // import {Client, Events, IntentsBitField, Partials } from 'discord.js';
 import { getMemberFromUser, getMemberCurrentQuest } from "./user";
-import { questResponse, startQuest } from "./quests/quest";
+import { questResponse, startQuest, displayScenarioMessage } from "./quests/quest";
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -64,7 +64,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	}
 
 	// start quest
-	await startQuest(member, memberCurrentQuest);
+	await startQuest(member, memberCurrentQuest.scenario, displayScenarioMessage);
 });
 
 client.on("messageCreate", async (message) => {
