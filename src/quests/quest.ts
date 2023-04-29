@@ -5,19 +5,26 @@ import { setTimeout as sleep } from 'timers/promises'
 import { existsSync } from "fs"; 
 import { getMemberCurrentQuest, getMemberFromUser } from "../user";
 
-const displayScenarioMessage = async (member: GuildMember, scenarioMessage: ScenarioMessage|ScenarioSubMessage): Promise<null> => {
-  const characterImage = `./src/images/${scenarioMessage.character}_${scenarioMessage.characterEmotion || "default" }.png`
-  const characterDefaultImage = `./src/images/${scenarioMessage.character}_default.png`
-  if (existsSync(characterImage)) {
+export const getCharacterImagePath = (scenarioMessage: ScenarioMessage|ScenarioSubMessage): string => {
+  const imagePath =  `./src/images/${scenarioMessage.character}_${scenarioMessage.characterEmotion}.png`;
+  const defaultImagePath =  `./src/images/${scenarioMessage.character}_default.png`;
+  if (existsSync(imagePath)) {
+    return imagePath;
+  } else if (existsSync(defaultImagePath)) {
+    return defaultImagePath;
+  } else {
+    return "";
+  }
+}
+
+export const displayScenarioMessage = async (member: GuildMember, scenarioMessage: ScenarioMessage|ScenarioSubMessage): Promise<null> => {
+  const characterImage =  getCharacterImagePath(scenarioMessage);
+  if (characterImage != "") {
     await member.send({files: [characterImage]});
     await member.send(scenarioMessage.messageBoxContent);
     await member.send({files: ["./src/images/closing_message_box.png"]});
-  } else if (existsSync(characterDefaultImage)) {
-    await member.send({files: [characterDefaultImage]});
-    await member.send(scenarioMessage.messageBoxContent);
-    await member.send({files: ["./src/images/closing_message_box.png"]});
   } else {
-    await member.send(`**${scenarioMessage.character}** ${(scenarioMessage.characterEmotion  || "").toLowerCase()}:`);
+    await member.send(`**${scenarioMessage.character}** ${(scenarioMessage.characterEmotion || "").toLowerCase()}:`);
     await member.send(scenarioMessage.messageBoxContent);
   }
 
@@ -26,63 +33,103 @@ const displayScenarioMessage = async (member: GuildMember, scenarioMessage: Scen
   }
   await sleep((scenarioMessage.messageBoxContent.length / 20) * 1000)
   return null
+};
+
+export const startQuest = async (
+  member: GuildMember,
+  messages: ScenarioMessage[],
+  messageHandler: (member: GuildMember, scenarioMessage: ScenarioMessage | ScenarioSubMessage) => Promise<null>
+  ): Promise<null> => {
+  messages.forEach(async message => {
+    await messageHandler(member, message)
+  });
+  return null
+}
+
+export const questStartMessages = (quest: Quest): ScenarioMessage[] => {
+  let currentMessageIndex = 0;
+  let responseExpectedMessageIndex = quest.scenario.findIndex(message => message.expectedResponses != null)
+  if (responseExpectedMessageIndex === -1) {
+    responseExpectedMessageIndex = quest.scenario.length - 1;
+  }
+  const messagesToSend: ScenarioMessage[] = []
+
+  while (currentMessageIndex <= responseExpectedMessageIndex) {
+    messagesToSend.push(quest.scenario[currentMessageIndex]);
+    currentMessageIndex += 1;
+  }
+  return messagesToSend;
 }
 
 
-export const startQuest = async (member: GuildMember, quest: Quest): Promise<null> => {
-  let currentMessageIndex = 0;
-  const responseExpectedMessageIndex = quest.scenario.findIndex(message => message.expectedResponses != null)
+/// NEW CODE
 
-  while (currentMessageIndex <= responseExpectedMessageIndex) {
-    await displayScenarioMessage(member, quest.scenario[currentMessageIndex])
+
+export const messageIsCorrect = (currentScenarioMessage: ScenarioMessage , message: Message): Boolean => {
+  let isCorrect = false;
+  currentScenarioMessage.expectedResponses.forEach((expectedResponse) => {
+    if (message.content.toLowerCase().includes(expectedResponse.toLowerCase())) {
+      isCorrect = true;
+    }
+  })
+  return isCorrect
+}
+
+export const sendWrongResponseMessage = async (member, currentScenarioMessage, random_num, messageHandler): Promise<string> => {
+  if (random_num > 0.8) {
+    await messageHandler(member, currentScenarioMessage.hintResponse);
+    return "hint"
+  } else {
+    await messageHandler(member, currentScenarioMessage.errorResponse);
+    return "error"
+  }
+}
+
+export const displayQuestLastMessages = async (member: GuildMember, memberCurrentQuest: Quest): Promise<null> => {
+  let currentMessageIndex = memberCurrentQuest.scenario.findIndex(message => message.expectedResponses != null) + 1;
+  while (currentMessageIndex < memberCurrentQuest.scenario.length) {
+    await displayScenarioMessage(member, memberCurrentQuest.scenario[currentMessageIndex]);
     currentMessageIndex += 1;
   }
-  return null;
+  return null
+}
+
+export const addQuestCompletedRole = async (member: GuildMember, memberCurrentQuest: Quest): Promise<Quest|undefined> => {
+  const nextQuest: Quest | undefined = quests[quests.findIndex(quest => quest.name == memberCurrentQuest.name) + 1];
+  let guildRole = member.guild.roles.cache.find(role => role.name == nextQuest.name)
+  if (!guildRole) {
+    await member.guild.roles.create({
+      name: nextQuest.name,
+    })
+    guildRole = member.guild.roles.cache.find(role => role.name == nextQuest.name)
+  }
+
+  member.roles.add(guildRole);
+  return nextQuest
+}
+
+export const finishQuest = async (member: GuildMember, memberCurrentQuest: Quest): Promise<Quest|undefined> => {
+  await displayQuestLastMessages(member, memberCurrentQuest)
+  const nextQuest = await addQuestCompletedRole(member, memberCurrentQuest)
+  await sleep(3 * 1000);
+  startQuest(member,questStartMessages(nextQuest), displayScenarioMessage);
+
+  return nextQuest
 }
 
 export const questResponse = async (message: Message, guild: Guild): Promise<null> => {
-  const expectedResponses: string[] = []
-
-  // get user quest
 	const member = await getMemberFromUser(message.author, guild);
 	const memberCurrentQuest = await getMemberCurrentQuest(member);
-  const currentScenarioMessage = memberCurrentQuest.scenario.find(message => message.expectedResponses);
-
-  // verify if response match
-  let messageIsCorrect = false;
-  currentScenarioMessage.expectedResponses.forEach((expectedResponse) => {
-    if (message.content.toLowerCase().includes(expectedResponse.toLowerCase())) {
-      messageIsCorrect = true;
-    }
-  })
+  const currentScenarioMessage: ScenarioMessage|undefined = memberCurrentQuest.scenario.find(message => message.expectedResponses);
+  if (currentScenarioMessage === undefined) {
+    throw "Scenario error: Missing a message with expectecedResponces"
+  }
+  const isCorrect = messageIsCorrect(currentScenarioMessage, message)
   
-  if (messageIsCorrect) {
-    let currentMessageIndex = memberCurrentQuest.scenario.findIndex(message => message.expectedResponses != null) + 1;
-    while (currentMessageIndex < memberCurrentQuest.scenario.length) {
-      await displayScenarioMessage(member, memberCurrentQuest.scenario[currentMessageIndex]);
-      currentMessageIndex += 1;
-    }
-    // setup next quest
-    const nextQuest: Quest | undefined = quests[quests.findIndex(quest => quest.name == memberCurrentQuest.name) + 1];
-    let guildRole = member.guild.roles.cache.find(role => role.name == nextQuest.name)
-    if (!guildRole) {
-      await member.guild.roles.create({
-        name: nextQuest.name,
-      })
-      guildRole = member.guild.roles.cache.find(role => role.name == nextQuest.name)
-    }
-
-    member.roles.add(guildRole);
-
-    await sleep(3 * 1000);
-
-    startQuest(member,nextQuest);
+  if (isCorrect) {
+    await finishQuest(member, memberCurrentQuest)
   } else {
-    if (Math.random() > 0.8) {
-      await displayScenarioMessage(member, currentScenarioMessage.hintResponse);
-    } else {
-      await displayScenarioMessage(member, currentScenarioMessage.errorResponse);
-    }
+    await sendWrongResponseMessage(member, currentScenarioMessage, Math.random(), displayScenarioMessage)
   }
   return null;
 }

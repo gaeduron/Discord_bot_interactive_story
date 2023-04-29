@@ -1,0 +1,104 @@
+[
+  {
+    "name": "Détective en herbe I",
+    "scenario": [
+      {
+        "messageBoxContent": "Tu as une idée de où se trouve la boulangerie? ",
+        "character": "Archie",
+        "characterEmotion": "Worried",
+        "expectedResponses": null
+      },
+      {
+        "messageBoxContent": "Trouvez sur la carte le nom de la rue de la boulangerie et donnez la à Archie il saura vous y guider",
+        "imageFile": "quest_001_carte.png",
+        "character": "Détective club",
+        "characterEmotion": null,
+        "expectedResponses": ["5 rue du beurre", "rue du beurre", "rue beurre", "beurre"],
+        "errorResponse": {
+          "messageBoxContent": "Il ne me semble pas que ce soit cette rue",
+          "character": "Archie",
+          "characterEmotion": "Thinking"
+        },
+        "hintResponse": {
+          "messageBoxContent": "Pendant notre appelle téléphonique j'ai entendu un clochet, la boulangerie doit etre proche d'une église.",
+          "character": "Archie",
+          "characterEmotion": "Idea"
+        }
+      },
+      {
+        "messageBoxContent": "Ha mais biensûr ! La rue du beurre, c'est la bas que ce trouve notre client allons y !",
+        "character": "Archie",
+        "characterEmotion": "Happy",
+        "expectedResponses": null
+      }
+    ]
+  },
+  {
+    "name": "Détective en herbe II",
+    "scenario": [
+      {
+        "messageBoxContent": "Bonjour monsieur Fourapin, soyez rassurer nous allons retrouver vos ingrédient manquant le plus vite possible.\n Pouvez vous nous lister les ingrédients manquant ?",
+        "character": "Archie",
+        "characterEmotion": "Serious",
+        "expectedResponses": null
+      },
+      {
+        "messageBoxContent": "Merci d'être venu si vite monsieur Leguillon, j'ai besoin de retrouver ces ingrédients en urgence mais je suis déjà déborder par les commandes de mes clients. Je ne comprend ce qu'il ce passe dans cette boulangerie, de plus en plus d'ingrédient disparaissent. Allez dans la reserver vous pourrez identifier les ingredients manquant.",
+        "character": "Boulanger",
+        "characterEmotion": "Worried",
+        "expectedResponses": null
+      },
+      {
+        "messageBoxContent": "Regarder dans la reserve quel sont les ingrédient manquants pour la commande du boulanger: example 'pistache carrote sel' ",
+        "imageFile": "Enigme_1_boulangerie_reserve_and_ingredient_list.png",
+        "character": "Détective club",
+        "characterEmotion": null,
+        "expectedResponses": ["vanille chocolat", "chocolat vanille", "chocolat et vanille", "vanille et chocolat", "chocolat, vanille", "vanille, chocolat", "de la vanille et du chocolat", "du chocolat et de la vanille"],
+        "errorResponse": {
+          "messageBoxContent": "Ce n'est pas les bon ingrédients, veuillez réessayer",
+          "character": "Détective club",
+          "characterEmotion": null
+        },
+        "hintResponse": {
+          "messageBoxContent": "Tout les pots à aromes sont completement vide, je comprend l'inquiétude du boulanger.",
+          "character": "Archie",
+          "characterEmotion": "Worried"
+        }
+      },
+      {
+        "messageBoxContent": "Le compte est bon ! Il nous suffit maintenant de trouver de la vanille et du chocolat avant d'investiguer cette disparition soudaine d'ingrédient.",
+        "character": "Archie",
+        "characterEmotion": "Content",
+        "expectedResponses": null
+      }
+    ]
+  },
+  {
+    "name": "Détective en herbe III",
+    "scenario": [
+      {
+        "messageBoxContent": "Notre devoir ici est terminé!",
+        "character": "Archie",
+        "characterEmotion": "Worried",
+        "expectedResponses": null
+      },
+      {
+        "messageBoxContent": "Retournons au bureau, une autre enquette nous attand...",
+        "character": "Archie",
+        "characterEmotion": "Happy",
+        "expectedResponses": null
+      }
+      ,
+      {
+        "messageBoxContent": "Félicitation vous avez terminer la première enquette: Détective en herbe 🎉",
+        "character": "System",
+        "characterEmotion": null,
+        "expectedResponses": null
+      }
+    ]
+  },
+  {
+    "name": "Détective en herbe IV",
+    "scenario": []
+  }
+]
