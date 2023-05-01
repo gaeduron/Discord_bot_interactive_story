@@ -6,7 +6,10 @@ import {
   getCharacterImagePath,
   displayScenarioMessage,
   messageIsCorrect,
-  sendWrongResponseMessage
+  sendWrongResponseMessage,
+  displayQuestLastMessages,
+  addQuestCompletedRole,
+  finishQuest
   } from './quest';
 import quests from "./quests_test.json";
 import { Quest, ScenarioMessage } from './types/quest';
@@ -14,6 +17,10 @@ import { Quest, ScenarioMessage } from './types/quest';
 const gameQuests = quests;
 
 describe("Quest module", () => {
+
+  beforeEach(() => {
+    process.env.NODE_ENV = "test"
+  })
   
   describe("Quest start messages", () => {
       test('read up to message with expected response', () => {
@@ -189,6 +196,26 @@ describe("Quest module", () => {
       expect(member.send).toHaveBeenCalledWith("hello")
       expect(member.send).toHaveBeenLastCalledWith({files: [`${process.cwd()}/src/images/${message.imageFile}`]})
     })
+
+    it("Should have a timeout between each message", async () => {
+      const member: GuildMember = ({
+        send: jest.fn()
+      } as unknown) as GuildMember
+      const message: ScenarioMessage = {
+        character: "Unknown",
+        characterEmotion: null,
+        messageBoxContent: "hello",
+        imageFile: "quest_001_carte.png",
+        expectedResponses: null
+      }
+
+      process.env.NODE_ENV = "dev"
+      const startTime = Date.now();
+      await displayScenarioMessage(member, message);
+      const endTime = Date.now();
+      expect(member.send).toBeCalledTimes(3)
+      expect(endTime - startTime).toBeGreaterThan(50);
+    })
   })
 
   describe("Message is correct", () => {
@@ -254,6 +281,104 @@ describe("Quest module", () => {
 
       expect(await sendWrongResponseMessage(member, currentScenarioMessage, 0.8, messageHandler)).toBe("error")
       expect(messageHandler).toHaveBeenCalledWith(member, currentScenarioMessage.errorResponse)
+    })
+  })
+
+  describe("Display quest last messages", () => {
+    it("Should send all messages after message with expected response", () => {
+      const messageHandler = jest.fn();
+      const member = ({} as unknown) as GuildMember
+      
+      displayQuestLastMessages(member,gameQuests[1], messageHandler)
+      expect(messageHandler).toHaveBeenCalledTimes(1)
+      expect(messageHandler).toHaveBeenCalledWith(member, gameQuests[1].scenario.at(-1))
+    })
+  })
+
+  describe("Add quest completed role", () => {
+    const memberCurrentQuest = gameQuests[0]
+
+    it("Should add role to member", async () => {
+      const member = ({
+        guild: {
+          roles: {
+            create: jest.fn(),
+            cache: {
+              find: jest.fn(() => {return "1235622513"})
+            }
+          },
+        },
+        roles: {
+          add: jest.fn()
+        }
+      } as unknown) as GuildMember
+      await addQuestCompletedRole(member, memberCurrentQuest, gameQuests)
+      expect(member.roles.add).toHaveBeenCalledWith("1235622513")
+    })
+
+    it("Should create role in guild if not already created", async () => {
+      const member = ({
+        guild: {
+          roles: {
+            create: jest.fn(),
+            cache: {
+              find: jest.fn(() => {return false})
+            }
+          },
+        },
+        roles: {
+          add: jest.fn()
+        }
+      } as unknown) as GuildMember
+      await addQuestCompletedRole(member, memberCurrentQuest, gameQuests)
+      expect(member.guild.roles.create).toHaveBeenCalledWith({
+        name: gameQuests[1].name
+      })
+    })
+
+    it("Should return undefined if it was the last quest", async () => {
+      const member = ({
+        guild: {
+          roles: {
+            create: jest.fn(),
+            cache: {
+              find: jest.fn(() => {return false})
+            }
+          },
+        },
+        roles: {
+          add: jest.fn()
+        }
+      } as unknown) as GuildMember
+      expect(await addQuestCompletedRole(member, gameQuests.at(-1), gameQuests)).toBe("No next quest")
+    })
+  })
+
+  describe("Finish quest", () => {
+    const member = ({
+      send: jest.fn(),
+      guild: {
+        roles: {
+          create: jest.fn(),
+          cache: {
+            find: jest.fn(() => {return "1231532515"})
+          }
+        },
+      },
+      roles: {
+        add: jest.fn()
+      }
+    } as unknown) as GuildMember
+
+    it("Should return the next quest to do", async () => {
+      console.log(process.env.NODE_ENV)
+      const nextQuest = await finishQuest(member, gameQuests[2], gameQuests, 0) as Quest
+      expect(nextQuest.name).toBe(gameQuests[3].name)
+    })
+
+    it("Should return `No next quest` when no other quest exist", async () => {
+      const nextQuest = await finishQuest(member, gameQuests.at(-1), gameQuests, 0)
+      expect(nextQuest).toBe("No next quest")
     })
   })
 })

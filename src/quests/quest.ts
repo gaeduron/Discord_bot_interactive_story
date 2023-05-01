@@ -1,9 +1,7 @@
-import { Guild, GuildMember, Message } from "discord.js";
-import { Quest, ScenarioMessage, ScenarioSubMessage } from "./types/quest";
-import quests from "./quests.json";
-import { setTimeout as sleep } from 'timers/promises'
+import { GuildMember, Message } from "discord.js";
+import { Quest, ScenarioMessage, ScenarioSubMessage, MessageHandler } from "./types/quest";
+import { setTimeout } from 'timers/promises'
 import { existsSync } from "fs"; 
-import { getMemberCurrentQuest, getMemberFromUser } from "../user";
 
 export const getCharacterImagePath = (scenarioMessage: ScenarioMessage|ScenarioSubMessage): string => {
   const imagePath = `${process.cwd()}/src/images/${scenarioMessage.character}_${scenarioMessage.characterEmotion}.png`;
@@ -31,15 +29,13 @@ export const displayScenarioMessage = async (member: GuildMember, scenarioMessag
   if ("imageFile" in scenarioMessage && scenarioMessage.imageFile) {
     await member.send({files: [`${process.cwd()}/src/images/${scenarioMessage.imageFile}`]});
   }
-  await sleep((scenarioMessage.messageBoxContent.length / 20) * 1000)
+  if (process.env.NODE_ENV !== 'test') {
+    await setTimeout(((scenarioMessage.messageBoxContent.length / 20) * 1000))
+  }
   return null
 };
 
-export const startQuest = async (
-  member: GuildMember,
-  messages: ScenarioMessage[],
-  messageHandler: (member: GuildMember, scenarioMessage: ScenarioMessage | ScenarioSubMessage) => Promise<null>
-  ): Promise<null> => {
+export const startQuest = async (member: GuildMember, messages: ScenarioMessage[], messageHandler: MessageHandler): Promise<null> => {
   messages.forEach(async message => {
     await messageHandler(member, message)
   });
@@ -61,10 +57,6 @@ export const questStartMessages = (quest: Quest): ScenarioMessage[] => {
   return messagesToSend;
 }
 
-
-/// NEW CODE
-
-
 export const messageIsCorrect = (currentScenarioMessage: ScenarioMessage , message: Message): Boolean => {
   let isCorrect = false;
   currentScenarioMessage.expectedResponses.forEach((expectedResponse) => {
@@ -75,7 +67,7 @@ export const messageIsCorrect = (currentScenarioMessage: ScenarioMessage , messa
   return isCorrect
 }
 
-export const sendWrongResponseMessage = async (member, currentScenarioMessage, random_num, messageHandler): Promise<string> => {
+export const sendWrongResponseMessage = async (member: GuildMember, currentScenarioMessage: ScenarioMessage, random_num: number, messageHandler: MessageHandler): Promise<string> => {
   if (random_num > 0.8) {
     await messageHandler(member, currentScenarioMessage.hintResponse);
     return "hint"
@@ -85,17 +77,20 @@ export const sendWrongResponseMessage = async (member, currentScenarioMessage, r
   }
 }
 
-export const displayQuestLastMessages = async (member: GuildMember, memberCurrentQuest: Quest): Promise<null> => {
+export const displayQuestLastMessages = async (member: GuildMember, memberCurrentQuest: Quest, messageHandler: MessageHandler): Promise<null> => {
   let currentMessageIndex = memberCurrentQuest.scenario.findIndex(message => message.expectedResponses != null) + 1;
   while (currentMessageIndex < memberCurrentQuest.scenario.length) {
-    await displayScenarioMessage(member, memberCurrentQuest.scenario[currentMessageIndex]);
+    await messageHandler(member, memberCurrentQuest.scenario[currentMessageIndex]);
     currentMessageIndex += 1;
   }
   return null
 }
 
-export const addQuestCompletedRole = async (member: GuildMember, memberCurrentQuest: Quest): Promise<Quest|undefined> => {
-  const nextQuest: Quest | undefined = quests[quests.findIndex(quest => quest.name == memberCurrentQuest.name) + 1];
+export const addQuestCompletedRole = async (member: GuildMember, memberCurrentQuest: Quest, allQuests: Quest[]): Promise<Quest|string> => {
+  const nextQuest: Quest | undefined = allQuests[allQuests.findIndex(quest => quest.name == memberCurrentQuest.name) + 1];
+  if (typeof nextQuest === 'undefined') {
+    return "No next quest"
+  }
   let guildRole = member.guild.roles.cache.find(role => role.name == nextQuest.name)
   if (!guildRole) {
     await member.guild.roles.create({
@@ -104,32 +99,23 @@ export const addQuestCompletedRole = async (member: GuildMember, memberCurrentQu
     guildRole = member.guild.roles.cache.find(role => role.name == nextQuest.name)
   }
 
-  member.roles.add(guildRole);
+  await member.roles.add(guildRole);
   return nextQuest
 }
 
-export const finishQuest = async (member: GuildMember, memberCurrentQuest: Quest): Promise<Quest|undefined> => {
-  await displayQuestLastMessages(member, memberCurrentQuest)
-  const nextQuest = await addQuestCompletedRole(member, memberCurrentQuest)
-  await sleep(3 * 1000);
-  startQuest(member,questStartMessages(nextQuest), displayScenarioMessage);
-
-  return nextQuest
-}
-
-export const questResponse = async (message: Message, guild: Guild): Promise<null> => {
-	const member = await getMemberFromUser(message.author, guild);
-	const memberCurrentQuest = await getMemberCurrentQuest(member);
-  const currentScenarioMessage: ScenarioMessage|undefined = memberCurrentQuest.scenario.find(message => message.expectedResponses);
-  if (currentScenarioMessage === undefined) {
-    throw "Scenario error: Missing a message with expectecedResponces"
-  }
-  const isCorrect = messageIsCorrect(currentScenarioMessage, message)
-  
-  if (isCorrect) {
-    await finishQuest(member, memberCurrentQuest)
+export const finishQuest = async (member: GuildMember, memberCurrentQuest: Quest, allQuests: Quest[], timeoutDuration = 3000): Promise<Quest|string> => {
+  await displayQuestLastMessages(member, memberCurrentQuest, displayScenarioMessage)
+  const nextQuest = await addQuestCompletedRole(member, memberCurrentQuest, allQuests)
+  if (typeof nextQuest !== 'string') {
+    await setTimeout(timeoutDuration);
+    await startQuest(member,questStartMessages(nextQuest), displayScenarioMessage);
   } else {
-    await sendWrongResponseMessage(member, currentScenarioMessage, Math.random(), displayScenarioMessage)
+    await displayScenarioMessage(member, {
+        messageBoxContent: "Vous avez fini toutes les enquêtes disponible.",
+        character: "System",
+        characterEmotion: null,
+        expectedResponses: null
+    })
   }
-  return null;
+  return nextQuest
 }
