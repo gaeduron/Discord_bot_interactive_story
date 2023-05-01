@@ -1,3 +1,4 @@
+import { GuildMember } from "discord.js";
 export interface ScenarioSubMessage {
     messageBoxContent: string,
     character: string,
@@ -18,3 +19,5 @@ export interface Quest {
   name: string;
   scenario: ScenarioMessage[];
 }
+
+export type MessageHandler = (member: GuildMember, scenarioMessage: ScenarioMessage | ScenarioSubMessage) => Promise<null>;

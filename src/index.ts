@@ -2,7 +2,8 @@
 const {Client, Events, IntentsBitField, Partials } = require('discord.js');
 // import {Client, Events, IntentsBitField, Partials } from 'discord.js';
 import { getMemberFromUser, getMemberCurrentQuest } from "./user";
-import { questResponse, startQuest } from "./quests/quest";
+import { startQuest, displayScenarioMessage, messageIsCorrect, finishQuest, sendWrongResponseMessage } from "./quests/quest";
+import quests from "./quests/quests.json";
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -64,7 +65,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	}
 
 	// start quest
-	await startQuest(member, memberCurrentQuest);
+	await startQuest(member, memberCurrentQuest.scenario, displayScenarioMessage);
 });
 
 client.on("messageCreate", async (message) => {
@@ -75,7 +76,18 @@ client.on("messageCreate", async (message) => {
 	// Direct messages
 	if(!message.guild) {
 		const guild = await client.guilds.fetch(process.env.SUPERNOVA_GUILD);
-		await questResponse(message, guild)
+		const member = await getMemberFromUser(message.author, guild);
+		const memberCurrentQuest = await getMemberCurrentQuest(member);
+
+		const currentScenarioMessage = memberCurrentQuest.scenario.find(message => message.expectedResponses);
+		if (currentScenarioMessage === undefined) {
+			throw "Scenario error: Missing a message with expectecedResponces"
+		}
+		if (messageIsCorrect(currentScenarioMessage, message)) {
+			await finishQuest(member, memberCurrentQuest, quests)
+		} else {
+			await sendWrongResponseMessage(member, currentScenarioMessage, Math.random(), displayScenarioMessage)
+		}
 	}
 	
 	// Guild messages
