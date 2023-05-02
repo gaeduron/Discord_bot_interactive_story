@@ -1,18 +1,18 @@
 import { GuildMember } from "discord.js";
 export interface ScenarioSubMessage {
-    messageBoxContent: string,
-    character: string,
-    characterEmotion?: string
+  messageBoxContent: string;
+  character: string;
+  characterEmotion?: string;
 }
 
 export interface ScenarioMessage {
-    messageBoxContent: string;
-    character: string;
-    characterEmotion?: string;
-    expectedResponses: string[] | null;
-    imageFile?: string;
-    errorResponse?: ScenarioSubMessage;
-    hintResponse?: ScenarioSubMessage;
+  messageBoxContent: string;
+  character: string;
+  characterEmotion?: string;
+  expectedResponses: string[] | null;
+  imageFile?: string;
+  errorResponse?: ScenarioSubMessage;
+  hintResponse?: ScenarioSubMessage;
 }
 
 export interface Quest {
@@ -20,4 +20,7 @@ export interface Quest {
   scenario: ScenarioMessage[];
 }
 
-export type MessageHandler = (member: GuildMember, scenarioMessage: ScenarioMessage | ScenarioSubMessage) => Promise<null>;
+export type MessageHandler = (
+  member: GuildMember,
+  scenarioMessage: ScenarioMessage | ScenarioSubMessage
+) => Promise<null>;
