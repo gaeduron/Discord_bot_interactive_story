@@ -1,1 +1,1 @@
-# Supernova_bot
+# Discord bot - Interactive story and puzzles
